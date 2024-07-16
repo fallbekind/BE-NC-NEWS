@@ -1,25 +1,39 @@
 const express = require('express');
 const app = express();
-const { getTopics, getEndPoints } = require('./controllers');
+const { getTopics, getEndPoints, getArticle } = require('./controllers');
+
+//QUERIES
 
 app.get('/api/topics', getTopics);
 
 app.get('/api', getEndPoints);
 
-//404 unknown URL
+app.get('/api/articles/:article_id', getArticle)
 
-app.use((request, response, next) => {
-    response.status(404).send({ msg: 'Not Found' });
-});
+//ERRORS
 
 app.use((err, request, response, next) => {
     if (err.code === '22P02') {
-        response.status(400).send({ msg: 'Bad Request' });
-    } else if (err.status && err.msg) {
+        response.status(400).send({ msg: 'Bad request' });
+    } else {
+        next(err);
+    }
+});
+
+app.use((err, request, response, next) => {
+    if(err.status && err.msg) {
         response.status(err.status).send({ msg: err.msg })
     } else {
         next(err);
-        }
+    }
+});
+
+app.all('*', (request, response) => {
+    response.status(404).send({ msg: 'Not Found' });
+});
+
+app.use((err, request, response) => {
+    response.status(500).send({ msg: 'Internal Server Error' });
 });
 
 module.exports = app;
