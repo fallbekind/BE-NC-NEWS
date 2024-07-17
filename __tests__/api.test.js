@@ -25,7 +25,7 @@ describe('GET /api/topics', () => {
             });
         });        
     });
-    test('responds with status code 404 and error message when passed invalid URL', () => {
+    test('responds with status code 404 and error message when passed invalid url', () => {
         return request(app)
             .get('/api/tonics')
             .expect(404)
@@ -46,7 +46,7 @@ describe('GET /api', () => {
     });
 });
 
-describe('GET /api/:article_id', () => {
+describe.only('GET /api/:article_id', () => {
     test('responds with status 200 and correct article when passed valid id', () => {
         return request(app)
         .get('/api/articles/1')
@@ -67,10 +67,55 @@ describe('GET /api/:article_id', () => {
     });
     test('responds with status 404 and error message when passed invalid id', () => {
         return request(app)
-        .get('/api/articles/20')
+        .get('/api/articles/500')
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe('Not Found');
+        });
+    });
+    test('responds with status 400 and error message when passed invalid id type', () => {
+        return request(app)
+        .get('/api/articles/fifteen')
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe('Bad Request');
+        });
+    });
+});
+
+describe('GET /api/articles', () => {
+    test('responds with status 200 and an array of article objects in descending order of date created', () => {
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            const output = body.articles;
+            //test for order of articles 
+        });
+    });
+    test(`responds with an array of article objects, each containing the following properties: author, title, 
+        article_id, topic, created_at, votes, article_img_url and comment_count `, () => {
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            const output = body.articles;
+            expect(output.length).toBe(13);
+            output.forEach((article) => {
+            
+                const expectedProperties = ['author', 'title', 'article_id', 'topic', 'created_at', 'votes', 'article_img_url', 'comment_count']
+                expectedProperties.forEach(prop => expect(article).toHaveProperty(prop));
+                expect(article).not.toHaveProperty('body');
+            });
+        });
+    });
+    test('responds with status 404 and error message when passed an invalid url', () => {
+        return request(app)
+        .get('/api/particles')
         .expect(404)
         .then(({ body }) => {
             expect(body.msg).toBe('Not Found');
         });
     });
 });
+    
