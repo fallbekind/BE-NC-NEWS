@@ -1,4 +1,4 @@
-const { selectTopics, selectArticle } = require('./models');
+const { selectTopics, selectArticle, selectAllArticles } = require('./models');
 const endPoints = require('./endpoints.json');
 
 const getTopics = (request, response, next) => {
@@ -16,6 +16,10 @@ const getEndPoints = (request, response) => {
 
 const getArticle = (request, response, next) => {
     const { article_id } = request.params;
+
+    if (isNaN(article_id)) {
+        return response.status(400).send({ msg: 'Bad Request' });
+    }
     selectArticle(article_id)
     .then((article) => {
         response.status(200).send({ article });
@@ -24,4 +28,14 @@ const getArticle = (request, response, next) => {
     });
 };
 
-module.exports = { getTopics, getEndPoints, getArticle };
+const getAllArticles = (request, response, next) => {
+
+    selectAllArticles()
+        .then((articles) => {
+            response.status(200).send({ articles })
+        }).catch((err) => {
+            next(err);
+        });
+};
+
+module.exports = { getTopics, getEndPoints, getArticle, getAllArticles };
