@@ -29,11 +29,13 @@ const getArticle = (request, response, next) => {
 };
 
 const getAllArticles = (request, response, next) => {
+    const { sort_as, order, topic } = request.query;
 
-    selectAllArticles()
+    selectAllArticles({ sort_as, order, topic })
         .then((articles) => {
-            response.status(200).send({ articles })
-        }).catch((err) => {
+            response.status(200).send({ articles });
+        })
+        .catch((err) => {
             next(err);
         });
 };
