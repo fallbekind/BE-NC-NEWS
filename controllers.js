@@ -1,4 +1,4 @@
-const { selectTopics, selectArticle, selectAllArticles } = require('./models');
+const { selectTopics, selectArticle, selectAllArticles, selectArticleComments } = require('./models');
 const endPoints = require('./endpoints.json');
 
 const getTopics = (request, response, next) => {
@@ -40,4 +40,19 @@ const getAllArticles = (request, response, next) => {
         });
 };
 
-module.exports = { getTopics, getEndPoints, getArticle, getAllArticles };
+const getArticleComments = (request, response, next) => {
+    const { article_id } = request.params;
+    
+    if (isNaN(article_id)) {
+        return response.status(400).send({ msg: 'Bad Request' });
+    }
+    selectArticleComments(article_id)
+        .then((comments) => {
+            response.status(200).send({ comments });
+        })
+        .catch((err) => {
+            next(err);
+        });
+};
+
+module.exports = { getTopics, getEndPoints, getArticle, getAllArticles, getArticleComments };

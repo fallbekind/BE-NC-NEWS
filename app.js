@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const { getTopics, getEndPoints, getArticle, getAllArticles } = require('./controllers');
+const { getTopics, getEndPoints, getArticle, getAllArticles, getArticleComments } = require('./controllers');
 
 //QUERIES
 
@@ -12,6 +12,8 @@ app.get('/api/articles/:article_id', getArticle)
 
 app.get('/api/articles', getAllArticles);
 
+app.get('/api/articles/:article_id/comments', getArticleComments);
+
 //ERRORS
 
 app.all('*', (request, response) => {
@@ -19,7 +21,7 @@ app.all('*', (request, response) => {
 });
 
 app.use((err, request, response, next) => {
-    if (err.code === '22P02') {
+    if (err.code === '22P02' || err.code === '23502') {
         response.status(400).send({ msg: 'Bad Request' });
     } else {
         next(err);
