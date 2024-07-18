@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
-const { getTopics, getEndPoints, getArticle, getAllArticles, getArticleComments } = require('./controllers');
+const { getTopics, getEndPoints, getArticleById, getAllArticles, getArticleComments, addComment, patchArticle } = require('./controllers');
+
+app.use(express.json());
 
 //QUERIES
 
@@ -8,11 +10,15 @@ app.get('/api/topics', getTopics);
 
 app.get('/api', getEndPoints);
 
-app.get('/api/articles/:article_id', getArticle)
+app.get('/api/articles/:article_id', getArticleById);
 
 app.get('/api/articles', getAllArticles);
 
 app.get('/api/articles/:article_id/comments', getArticleComments);
+
+app.post('/api/articles/:article_id/comments', addComment);
+
+app.patch('/api/articles/:article_id', patchArticle);
 
 //ERRORS
 
@@ -23,9 +29,13 @@ app.all('*', (request, response) => {
 app.use((err, request, response, next) => {
     if (err.code === '22P02' || err.code === '23502') {
         response.status(400).send({ msg: 'Bad Request' });
-    } else {
-        next(err);
-    }
+    } else if 
+        (err.code === '23503') {
+            response.status(404).send({ msg: 'Username Does Not Exist'})
+        }
+        else {
+            next(err);
+        }
 });
 
 app.use((err, request, response, next) => {
