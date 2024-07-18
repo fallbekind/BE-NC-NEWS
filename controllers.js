@@ -1,4 +1,4 @@
-const { selectTopics, selectArticle, selectAllArticles } = require('./models');
+const { selectTopics, selectArticle, selectAllArticles, selectArticleComments } = require('./models');
 const endPoints = require('./endpoints.json');
 
 const getTopics = (request, response, next) => {
@@ -29,13 +29,30 @@ const getArticle = (request, response, next) => {
 };
 
 const getAllArticles = (request, response, next) => {
+    const { sort_as, order, topic } = request.query;
 
-    selectAllArticles()
+    selectAllArticles({ sort_as, order, topic })
         .then((articles) => {
-            response.status(200).send({ articles })
-        }).catch((err) => {
+            response.status(200).send({ articles });
+        })
+        .catch((err) => {
             next(err);
         });
 };
 
-module.exports = { getTopics, getEndPoints, getArticle, getAllArticles };
+const getArticleComments = (request, response, next) => {
+    const { article_id } = request.params;
+    
+    if (isNaN(article_id)) {
+        return response.status(400).send({ msg: 'Bad Request' });
+    }
+    selectArticleComments(article_id)
+        .then((comments) => {
+            response.status(200).send({ comments });
+        })
+        .catch((err) => {
+            next(err);
+        });
+};
+
+module.exports = { getTopics, getEndPoints, getArticle, getAllArticles, getArticleComments };
