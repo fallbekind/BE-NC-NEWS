@@ -1,4 +1,4 @@
-const { selectTopics, selectArticle, selectAllArticles, selectArticleComments } = require('./models');
+const { selectTopics, selectArticleById, selectAllArticles, selectArticleComments, addCommentToArticle, updateArticle } = require('./models');
 const endPoints = require('./endpoints.json');
 
 const getTopics = (request, response, next) => {
@@ -14,13 +14,13 @@ const getEndPoints = (request, response) => {
     response.status(200).send({ endpoints: endPoints });
 };
 
-const getArticle = (request, response, next) => {
+const getArticleById = (request, response, next) => {
     const { article_id } = request.params;
 
     if (isNaN(article_id)) {
         return response.status(400).send({ msg: 'Bad Request' });
     }
-    selectArticle(article_id)
+    selectArticleById(article_id)
     .then((article) => {
         response.status(200).send({ article });
     }).catch((err) => {
@@ -42,10 +42,11 @@ const getAllArticles = (request, response, next) => {
 
 const getArticleComments = (request, response, next) => {
     const { article_id } = request.params;
-    
+
     if (isNaN(article_id)) {
         return response.status(400).send({ msg: 'Bad Request' });
     }
+
     selectArticleComments(article_id)
         .then((comments) => {
             response.status(200).send({ comments });
@@ -55,4 +56,41 @@ const getArticleComments = (request, response, next) => {
         });
 };
 
-module.exports = { getTopics, getEndPoints, getArticle, getAllArticles, getArticleComments };
+const addComment = (request, response, next) => {
+
+    const { article_id } = request.params;
+    const { username, body } = request.body;
+
+    addCommentToArticle(article_id, username, body).then((comment) => {
+
+        response.status(201).send({ comment })
+    }).catch((err) => {
+        next(err);
+    });
+};
+
+const patchArticle = (request, response, next) => {
+    const { article_id } = request.params;
+    const { inc_votes } = request.body;
+
+    if (isNaN(article_id)) {
+        return response.status(400).send({ message: 'Bad Request' });
+    }
+
+    if (typeof inc_votes !== 'number') {
+        return response.status(400).send({ message: 'Bad Request' });
+    }
+
+    updateArticle(article_id, inc_votes)
+        .then((article) => { 
+        
+        if (!article) {
+            return response.status(404).send({ message: 'Not Found' });
+        }
+        response.status(200).send({ article })
+    }).catch((err) => {
+        next(err);
+    });
+};
+
+module.exports = { getTopics, getEndPoints, getArticleById, getAllArticles, getArticleComments, addComment, patchArticle };

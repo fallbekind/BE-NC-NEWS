@@ -131,9 +131,16 @@ describe('GET', () => {
                     expect(comment).toHaveProperty('body');
                     expect(comment).toHaveProperty('votes');
                     expect(comment).toHaveProperty('author');
-                    expect(comment).toHaveProperty('article_id');
                     expect(comment).toHaveProperty('created_at');                                               
                 });
+            });
+        });
+        test('responds with status 200 and an empty array if there are no comments related to the given article', () => {
+            return request(app)
+            .get('/api/articles/2/comments')
+            .expect(200)
+            .then(({ body: { comments } }) => {
+                expect(comments).toEqual([]);
             });
         });
         test('responds with status 404 and an error message when passed an article_id that does not exist', () => {
@@ -149,6 +156,148 @@ describe('GET', () => {
                 .expect(400)
                 .then(({ body: { msg } }) => 
                     expect(msg).toBe('Bad Request'));
+        });
+    });
+});
+
+describe('POST', () => { 
+    describe('/api/articles/:article_id/comments', () => {
+        test('responds with status 201 and a new comment to the relative article', () => {
+            const newComment = {
+                username: "butter_bridge",
+                body: "Oh, I've got compassion running out of my nose, pal! I'm the Sultan of Sentiment!"
+            }
+            return request(app)
+            .post('/api/articles/4/comments')
+            .send(newComment)
+            .expect(201)
+            .then((response) => {
+                const comment = response.body.comment;
+
+                expect(comment).toEqual({
+                    article_id: 4,
+                    body: "Oh, I've got compassion running out of my nose, pal! I'm the Sultan of Sentiment!",
+                    comment_id: 19,
+                    created_at: expect.any(String),
+                    author: 'butter_bridge',
+                    votes: expect.any(Number)
+                });
+            });
+        });
+        test('responds with status 404 and an error message when passed an invalid username', () => {
+            return request(app)
+            .post('/api/articles/4/comments')
+            .send({
+                username: 'regina_george',
+                body: 'Because that vest was disgusting!'
+            })
+            .expect(404)
+            .then(({ body }) => {
+                expect(body.msg).toBe('Username Does Not Exist')
+            });
+        });
+        test('responds with status 404 and an error message when passed a non-existent article id', () => {
+            return request(app)
+            .post('/api/articles/999/comments')
+            .send({
+                username: 'butter-bridge',
+                body: "Oh, I've got compassion running out of my nose, pal! I'm the Sultan of Sentiment!"
+            })
+            .expect(404)
+            .then(({ body }) => {
+                expect(body.msg).toBe('Not Found')
+            });
+        });
+        test('responds with status 400 and an error message when passed username or body input is absent', () => {
+            return request(app)
+            .post('/api/articles/4/comments')
+            .send({ body: "Oh, I've got compassion running out of my nose, pal! I'm the Sultan of Sentiment!" })
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('Bad Request')
+            });
+        });
+        test('responds with status 400 and an error message when passed an invalid article id', () => {
+            return request(app)
+            .post('/api/articles/fourteen/comments')
+            .send({ 
+                username: 'butter_bridge',
+                body: "Oh, I've got compassion running out of my nose, pal! I'm the Sultan of Sentiment!" 
+            })
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('Bad Request')
+            });
+        });
+    });
+});
+
+describe('PATCH', () => {
+    describe('/api/articles/:article_id', () => {
+        test('responds with status 200 and an updated article', () => {
+            return request(app)
+            .patch('/api/articles/1')
+            .send({ inc_votes: 97 })
+            .expect(200)
+            .then(({ body: { article } }) => {
+                expect(article).toEqual({ 
+                    
+                    article_id: 1,
+                    title: "Living in the shadow of a great man",
+                    topic: "mitch",
+                    author: "butter_bridge",
+                    body: "I find this existence challenging",
+                    created_at: '2020-07-09T20:11:00.000Z',
+                    votes: 197,
+                    article_img_url:
+                        "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700"
+                    });
+            });
+        });
+        test('responds with status 404 and error message if passed article does not exist', () => {
+            return request(app)
+                .patch('/api/articles/360')
+                .send({ inc_votes: 5 })
+                .expect(404)
+                .then(({ body: { message } }) => {
+                    expect(message).toBe('Not Found')
+                });
+        });
+        test('responds with status 404 and error message if passed article id does not exist', () => {
+            return request(app)
+                .patch('/api/articles/360')
+                .send({ inc_votes: 5 })
+                .expect(404)
+                .then(({ body: { message } }) => {
+                    expect(message).toBe('Not Found')
+                });
+        });
+        test('responds with status 400 and error message if passed an invalid article id', () => {
+            return request(app)
+                .patch('/api/articles/three-six-five')
+                .send({ inc_votes: 5 })
+                .expect(400)
+                .then(({ body: { message } }) => {
+                    expect(message).toBe('Bad Request')
+                });
+        });
+        test('responds with status 400 and error message if inc_votes is absent', () => {
+            return request(app)
+                .patch('/api/articles/1')
+                .send({})
+                .expect(400)
+                .then(({ body: { message } }) => {
+                    expect(message).toBe('Bad Request')
+                });
+        });
+        test('responds with status 400 and error message if inc_votes is invalid', () => {
+            return request(app)
+                .patch('/api/articles/1')
+                .send({ inc_votes: 'three-six-five'})
+                .expect(400)
+                .then(({ body: { message } }) => {
+                    expect(message).toBe('Bad Request')
+                });
         });
     });
 });

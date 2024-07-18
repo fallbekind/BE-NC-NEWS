@@ -55,5 +55,18 @@
         }
       ]
     }
+  },
+  "POST /api/articles/:article_id/comments": {
+    "description": "serves a posted comment",
+    "queries": [],
+    "exampleResponse": {
+    }
+  },
+  "PATCH /api/articles/:article_id": {
+    "description": "updates an article",
+    "queries": [],
+    "exampleResponse": {
+
+    }
   }
 }
