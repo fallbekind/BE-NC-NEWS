@@ -19,13 +19,13 @@ function selectArticleById(article_id) {
 
 function selectAllArticles({ sort_as = 'created_at', order = 'DESC', topic }) {
     const sortColumns = ['article_id', 'title', 'topic', 'author', 'created_at', 'votes', 'comment_count'];
-    const orderIn = ['asc', 'desc'];
+    const orderIn = ['ASC', 'DESC'];
 
-    if (!sortColumns.includes(sort_as)) {
-        sort_as = 'created_at';
-    }
-    if (!orderIn.includes(order)) {
-        order = 'DESC';
+    if (!sortColumns.includes(sort_as) || !orderIn.includes(order)) {
+        return Promise.reject({
+          status: 400,
+          message: "Bad Request",
+        });
     }
     let query = `SELECT
         articles.article_id,
@@ -55,10 +55,11 @@ function selectAllArticles({ sort_as = 'created_at', order = 'DESC', topic }) {
     }
     query += ` ORDER BY ${sort_as} ${order};`;
 
-    return db.query(query, queries).then(({ rows: articles }) => articles);
+    return db.query(query, queries)
+        .then(({ rows: articles }) => articles);
 }
 
-function selectArticleComments(article_id) {
+function selectArticleCommentById(article_id) {
    
     return db.query(`
         SELECT 1 FROM articles WHERE article_id = $1;
@@ -104,8 +105,17 @@ function updateArticle(article_id, alt_votes) {
 };
 
 function removeCommentById(comment_id) {
-    return db.query(`DELETE FROM comments
-        WHERE comment_id = $1`, [comment_id]);
+
+    if(isNaN(comment_id)) {
+        return Promise.reject({ status: 400, message: 'Bad Request' });
+    }
+    return db.query('SELECT 1 FROM comments WHERE comment_id = $1', [comment_id])
+        .then(result => {
+            if (result.rowCount === 0) {
+                return Promise.reject({ status: 404, message: 'Not found' });
+            }
+            return db.query('DELETE FROM comments WHERE comment_id = $1', [comment_id]);
+        });    
 };
 
 function selectAllUsers() {
@@ -113,4 +123,4 @@ function selectAllUsers() {
     .then(({ rows: users }) => users);
 };
 
-module.exports = { selectTopics, selectArticleById, selectAllArticles, selectArticleComments, addCommentToArticle, updateArticle, removeCommentById, selectAllUsers };
+module.exports = { selectTopics, selectArticleById, selectAllArticles, selectArticleCommentById, addCommentToArticle, updateArticle, removeCommentById, selectAllUsers };

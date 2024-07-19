@@ -1,4 +1,4 @@
-const { selectTopics, selectArticleById, selectAllArticles, selectArticleComments, addCommentToArticle, updateArticle, removeCommentById, selectAllUsers } = require('./models');
+const { selectTopics, selectArticleById, selectAllArticles, selectArticleCommentById, addCommentToArticle, updateArticle, removeCommentById, selectAllUsers } = require('./models');
 const endPoints = require('./endpoints.json');
 
 const getTopics = (request, response, next) => {
@@ -36,18 +36,22 @@ const getAllArticles = (request, response, next) => {
             response.status(200).send({ articles });
         })
         .catch((err) => {
+            if (err.status === 400) {
+                response.status(400).send({ message: err.message });
+            } else {
             next(err);
+            }
         });
 };
 
-const getArticleComments = (request, response, next) => {
+const getArticleCommentById = (request, response, next) => {
     const { article_id } = request.params;
 
     if (isNaN(article_id)) {
         return response.status(400).send({ msg: 'Bad Request' });
     }
 
-    selectArticleComments(article_id)
+    selectArticleCommentById(article_id)
         .then((comments) => {
             response.status(200).send({ comments });
         })
@@ -93,13 +97,20 @@ const patchArticle = (request, response, next) => {
     });
 };
 
-const deleteComment = (request, response, next) => {
+const deleteCommentById = (request, response, next) => {
     const { comment_id } = request.params;
-    removeCommentById(comment_id).then(() => response.status(204).send())
+
+    removeCommentById(comment_id)
+    .then(() => response.status(204).send())
+    
     .catch((err) => {
-        next (err);
+        if (err.status) {
+            response.status(err.status).send({ message: err.message });
+        } else {
+            next(err);
+        }
     });
-}
+};
 
 const getAllUsers = (request, response, next) => {
     selectAllUsers().then((users) => {
@@ -110,4 +121,4 @@ const getAllUsers = (request, response, next) => {
     });
 }
 
-module.exports = { getTopics, getEndPoints, getArticleById, getAllArticles, getArticleComments, addComment, patchArticle, deleteComment, getAllUsers };
+module.exports = { getTopics, getEndPoints, getArticleById, getAllArticles, getArticleCommentById, addComment, patchArticle, deleteCommentById, getAllUsers };

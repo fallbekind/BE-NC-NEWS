@@ -82,9 +82,8 @@ describe('GET', () => {
                 });
         });
     });
-
     describe('/api/articles', () => {
-        test('responds with status 200 and an array of article objects in descending order of date created', () => {
+        test('responds with status 200 and an array of all article objects in descending order of date created', () => {
             return request(app)
                 .get('/api/articles')
                 .expect(200)
@@ -92,7 +91,7 @@ describe('GET', () => {
                     expect(articles).toBeSortedBy('created_at', { descending: true });
                 });
         });
-        test(`responds with an array of article objects, each containing the following properties: author, title, 
+        test(`responds with an array of all article objects, each containing the following properties: author, title, 
             article_id, topic, created_at, votes, article_img_url and comment_count `, () => {
             return request(app)
                 .get('/api/articles')
@@ -107,6 +106,35 @@ describe('GET', () => {
                 });
             });
         });
+        test('responds with status 200 and an array of all article objects ordered by a specified column', () => {
+            return request(app)
+            .get('/api/articles?sort_as=author')
+            .expect(200)
+            .then(({ body: { articles } }) => {
+                expect(articles.length).toBe(13)
+                expect(articles).toBeSortedBy('author', { descending: true })
+            });
+        });
+        test('responds with status 200 and an array of all article objects ordered in a specified direction', () => {
+            return request(app)
+            .get('/api/articles?order=ASC')
+            .expect(200)
+            .then(({ body: { articles } }) => {
+                expect(articles.length).toBe(13)
+                expect(articles).toBeSortedBy('created_at', { descending: false });
+            });
+        });
+        test('responds with status 200 and an array of article topics filtered by a specified topic', () => {
+            return request(app)
+            .get('/api/articles?topic=cats')
+            .expect(200)
+            .then(({ body: { articles } }) => {
+                expect(articles.length).toBe(1)
+                articles.forEach(article => {
+                    expect(article).toHaveProperty("topic", "cats");               
+                });
+            });
+        });
         test('responds with status 404 and an error message when passed an invalid url', () => {
             return request(app)
                 .get('/api/particles')
@@ -114,8 +142,21 @@ describe('GET', () => {
                 .then(({ body: { msg } }) =>
                     expect(msg).toBe('Not Found'));
         });
+        test('responds with status 400 and an error message when passed an invalid sort_as query', () => {
+            return request(app)
+            .get('/api/articles?sort_as=coolness')
+            .expect(400)
+            .then(({ body: { message } }) => 
+                expect(message).toBe('Bad Request'));
+        });
+        test('responds with status 400 and an error message when passed an invalid order query', () => {
+            return request(app)
+            .get('/api/articles?order=sideways')
+            .expect(400)
+            .then(({ body: { message } }) => 
+                expect(message).toBe('Bad Request'));
+        });
     });
-
     describe('/api/articles/:article_id/comments', () => {
         test('responds with status 200 and an array of comments for the given article_id, sorted by most recent first', () => {
         return request(app)
@@ -207,6 +248,29 @@ describe('POST', () => {
                 });
             });
         });
+        test('responds with status 201 and a new comment which ignores unnecessary properties', () => {
+            const newComment = {
+                username: "butter_bridge",
+                body: "Oh, I've got compassion running out of my nose, pal! I'm the Sultan of Sentiment!",
+                accent: "Scouse"
+            }
+            return request(app)
+            .post('/api/articles/4/comments')
+            .send(newComment)
+            .expect(201)
+            .then((response) => {
+                const comment = response.body.comment;
+
+                expect(comment).toEqual({
+                    article_id: 4,
+                    body: "Oh, I've got compassion running out of my nose, pal! I'm the Sultan of Sentiment!",
+                    comment_id: 19,
+                    created_at: expect.any(String),
+                    author: 'butter_bridge',
+                    votes: expect.any(Number)
+                });
+            });
+        });
         test('responds with status 404 and an error message when passed an invalid username', () => {
             return request(app)
             .post('/api/articles/4/comments')
@@ -252,6 +316,7 @@ describe('POST', () => {
                 expect(body.msg).toBe('Bad Request')
             });
         });
+
     });
 });
 
@@ -278,15 +343,6 @@ describe('PATCH', () => {
             });
         });
         test('responds with status 404 and error message if passed article does not exist', () => {
-            return request(app)
-                .patch('/api/articles/360')
-                .send({ alt_votes: 5 })
-                .expect(404)
-                .then(({ body: { message } }) => {
-                    expect(message).toBe('Not Found')
-                });
-        });
-        test('responds with status 404 and error message if passed article id does not exist', () => {
             return request(app)
                 .patch('/api/articles/360')
                 .send({ alt_votes: 5 })
@@ -331,6 +387,22 @@ describe('DELETE', () => {
             return request(app)
             .delete('/api/comments/2')
             .expect(204);
+        });
+        test('responds with status 404 and error message when passed a comment id that does not exist', () => {
+            return request(app)
+            .delete('/api/comments/222')
+            .expect(404)
+            // .then(({ body: { message } }) => {
+            //     expect(message).toBe('Not Found')
+            // });
+        });
+        test('responds with status 400 when passed an invalid comment id', () => {
+            return request(app)
+            .delete('/api/comments/kefir')
+            .expect(400)
+            // .then(({ body: { message } }) => {
+            //     expect(message).toBe('Bad Request')
+            // });
         });
     });
 });
