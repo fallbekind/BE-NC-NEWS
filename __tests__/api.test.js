@@ -158,7 +158,7 @@ describe('GET', () => {
                     expect(msg).toBe('Bad Request'));
         });
     });
-    describe.only('/api/users', () => {
+    describe('/api/users', () => {
         test('responds with status 200 and an array of objects with the following properties: username, name and avatar_url', () => {
             return request(app)
             .get('/api/users')
