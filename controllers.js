@@ -1,4 +1,4 @@
-const { selectTopics, selectArticleById, selectAllArticles, selectArticleComments, addCommentToArticle, updateArticle } = require('./models');
+const { selectTopics, selectArticleById, selectAllArticles, selectArticleComments, addCommentToArticle, updateArticle, removeCommentById, selectAllUsers } = require('./models');
 const endPoints = require('./endpoints.json');
 
 const getTopics = (request, response, next) => {
@@ -71,17 +71,17 @@ const addComment = (request, response, next) => {
 
 const patchArticle = (request, response, next) => {
     const { article_id } = request.params;
-    const { inc_votes } = request.body;
+    const { alt_votes } = request.body;
 
     if (isNaN(article_id)) {
         return response.status(400).send({ message: 'Bad Request' });
     }
 
-    if (typeof inc_votes !== 'number') {
+    if (typeof alt_votes !== 'number') {
         return response.status(400).send({ message: 'Bad Request' });
     }
 
-    updateArticle(article_id, inc_votes)
+    updateArticle(article_id, alt_votes)
         .then((article) => { 
         
         if (!article) {
@@ -93,4 +93,21 @@ const patchArticle = (request, response, next) => {
     });
 };
 
-module.exports = { getTopics, getEndPoints, getArticleById, getAllArticles, getArticleComments, addComment, patchArticle };
+const deleteComment = (request, response, next) => {
+    const { comment_id } = request.params;
+    removeCommentById(comment_id).then(() => response.status(204).send())
+    .catch((err) => {
+        next (err);
+    });
+}
+
+const getAllUsers = (request, response, next) => {
+    selectAllUsers().then((users) => {
+        response.status(200).send({ users })
+    })
+    .catch((err) => {
+        next (err);
+    });
+}
+
+module.exports = { getTopics, getEndPoints, getArticleById, getAllArticles, getArticleComments, addComment, patchArticle, deleteComment, getAllUsers };

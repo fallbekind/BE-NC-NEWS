@@ -93,14 +93,24 @@ function addCommentToArticle(article_id, username, body) {
         });
 };
 
-function updateArticle(article_id, inc_votes) {
+function updateArticle(article_id, alt_votes) {
     const patchQuery = `UPDATE articles
         SET votes = votes + $1
         WHERE article_id = $2
         RETURNING *;`
 
-        return db.query(patchQuery, [inc_votes, article_id])
+        return db.query(patchQuery, [alt_votes, article_id])
         .then(({ rows: articles }) => articles[0]);
 };
 
-module.exports = { selectTopics, selectArticleById, selectAllArticles, selectArticleComments, addCommentToArticle, updateArticle };
+function removeCommentById(comment_id) {
+    return db.query(`DELETE FROM comments
+        WHERE comment_id = $1`, [comment_id]);
+};
+
+function selectAllUsers() {
+    return db.query(`SELECT * FROM users;`)
+    .then(({ rows: users }) => users);
+};
+
+module.exports = { selectTopics, selectArticleById, selectAllArticles, selectArticleComments, addCommentToArticle, updateArticle, removeCommentById, selectAllUsers };
