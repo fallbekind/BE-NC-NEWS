@@ -91,7 +91,7 @@ describe('GET', () => {
                     expect(articles).toBeSortedBy('created_at', { descending: true });
                 });
         });
-        test(`responds with an array of all article objects, each containing the following properties: author, title, 
+        test(`responds with status 200 an array of all article objects, each containing the following properties: author, title, 
             article_id, topic, created_at, votes, article_img_url and comment_count `, () => {
             return request(app)
                 .get('/api/articles')
@@ -115,7 +115,7 @@ describe('GET', () => {
                 expect(articles).toBeSortedBy('author', { descending: true })
             });
         });
-        test('responds with status 200 and an array of all article objects ordered in a specified direction', () => {
+        test('responds with status 200 and an array of all article objects ordered in a specified order', () => {
             return request(app)
             .get('/api/articles?order=ASC')
             .expect(200)
@@ -124,7 +124,16 @@ describe('GET', () => {
                 expect(articles).toBeSortedBy('created_at', { descending: false });
             });
         });
-        test('responds with status 200 and an array of article topics filtered by a specified topic', () => {
+        test('responds with status 200 and an array of all article objects ordered by a specified column in a specified order', () => {
+            return request(app)
+            .get('/api/articles?sort_as=author&&order=ASC')
+            .expect(200)
+            .then(({ body: { articles } }) => {
+                expect(articles.length).toBe(13)
+                expect(articles).toBeSortedBy('author', { descending: false });
+            });
+        });
+        test('responds with status 200 and an array of article objects filtered by a specified topic', () => {
             return request(app)
             .get('/api/articles?topic=cats')
             .expect(200)
@@ -135,7 +144,24 @@ describe('GET', () => {
                 });
             });
         });
-        test('responds with status 404 and an error message when passed an invalid url', () => {
+        test('responds with status 200 and an empty array when there are no articles related to a specified topic', () => {
+            return request(app)
+            .get('/api/articles?topic=paper')
+            .expect(200)
+            .then(({ body: { articles } }) => {
+                expect(Array.isArray(articles)).toBe(true);
+                expect(articles.length).toBe(0);              
+            });
+        });
+        test('responds with status 404 and error message if topic does not exist', () => {
+            return request(app)
+            .get('/api/articles?topic=brats')
+            .expect(404)
+            .then(({ body }) => {
+                expect(body).toHaveProperty('message', 'Not Found');
+            });
+        });
+        test('responds with status 404 and error message when passed an invalid endpoint', () => {
             return request(app)
                 .get('/api/particles')
                 .expect(404)

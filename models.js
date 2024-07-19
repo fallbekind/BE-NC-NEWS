@@ -18,6 +18,7 @@ function selectArticleById(article_id) {
 };
 
 function selectAllArticles({ sort_as = 'created_at', order = 'DESC', topic }) {
+
     const sortColumns = ['article_id', 'title', 'topic', 'author', 'created_at', 'votes', 'comment_count'];
     const orderIn = ['ASC', 'DESC'];
 
@@ -27,6 +28,17 @@ function selectAllArticles({ sort_as = 'created_at', order = 'DESC', topic }) {
           message: "Bad Request",
         });
     }
+
+    return selectTopics().then((topics) => {
+        const validTopics = topics.map(topic => topic.slug);
+
+        if (topic && !validTopics.includes(topic)) {
+            return Promise.reject({
+                status: 404,
+                message: 'Not Found'
+            });
+        }
+
     let query = `SELECT
         articles.article_id,
         articles.title,
@@ -56,8 +68,10 @@ function selectAllArticles({ sort_as = 'created_at', order = 'DESC', topic }) {
     query += ` ORDER BY ${sort_as} ${order};`;
 
     return db.query(query, queries)
-        .then(({ rows: articles }) => articles);
-}
+
+    }).then(({ rows: articles }) => articles);
+};
+
 
 function selectArticleCommentById(article_id) {
    
