@@ -116,7 +116,7 @@ describe('GET', () => {
         });
     });
 
-    describe('GET /api/articles/:article_id/comments', () => {
+    describe('/api/articles/:article_id/comments', () => {
         test('responds with status 200 and an array of comments for the given article_id, sorted by most recent first', () => {
         return request(app)
             .get('/api/articles/1/comments')
@@ -156,6 +156,29 @@ describe('GET', () => {
                 .expect(400)
                 .then(({ body: { msg } }) => 
                     expect(msg).toBe('Bad Request'));
+        });
+    });
+    describe('/api/users', () => {
+        test('responds with status 200 and an array of objects with the following properties: username, name and avatar_url', () => {
+            return request(app)
+            .get('/api/users')
+            .expect(200)
+            .then(({ body: { users } }) => {
+                expect(users.length).toBe(4);
+
+                users.forEach((user) => {
+                const expectedProperties = ['username', 'name', 'avatar_url'];
+                expectedProperties.forEach(property => expect(user).toHaveProperty(property));
+                });
+            });
+        });
+        test('responds with status code 404 and error message Not Found when passed an invalid path', () => {
+            return request(app)
+                .get('/api/losers')
+                .expect(404)
+                .then(response => {
+                    expect(response.body.msg).toBe('Not Found');
+                });
         });
     });
 });
@@ -237,7 +260,7 @@ describe('PATCH', () => {
         test('responds with status 200 and an updated article', () => {
             return request(app)
             .patch('/api/articles/1')
-            .send({ inc_votes: 97 })
+            .send({ alt_votes: 97 })
             .expect(200)
             .then(({ body: { article } }) => {
                 expect(article).toEqual({ 
@@ -257,7 +280,7 @@ describe('PATCH', () => {
         test('responds with status 404 and error message if passed article does not exist', () => {
             return request(app)
                 .patch('/api/articles/360')
-                .send({ inc_votes: 5 })
+                .send({ alt_votes: 5 })
                 .expect(404)
                 .then(({ body: { message } }) => {
                     expect(message).toBe('Not Found')
@@ -266,7 +289,7 @@ describe('PATCH', () => {
         test('responds with status 404 and error message if passed article id does not exist', () => {
             return request(app)
                 .patch('/api/articles/360')
-                .send({ inc_votes: 5 })
+                .send({ alt_votes: 5 })
                 .expect(404)
                 .then(({ body: { message } }) => {
                     expect(message).toBe('Not Found')
@@ -275,13 +298,13 @@ describe('PATCH', () => {
         test('responds with status 400 and error message if passed an invalid article id', () => {
             return request(app)
                 .patch('/api/articles/three-six-five')
-                .send({ inc_votes: 5 })
+                .send({ alt_votes: 5 })
                 .expect(400)
                 .then(({ body: { message } }) => {
                     expect(message).toBe('Bad Request')
                 });
         });
-        test('responds with status 400 and error message if inc_votes is absent', () => {
+        test('responds with status 400 and error message if votes is absent', () => {
             return request(app)
                 .patch('/api/articles/1')
                 .send({})
@@ -290,14 +313,24 @@ describe('PATCH', () => {
                     expect(message).toBe('Bad Request')
                 });
         });
-        test('responds with status 400 and error message if inc_votes is invalid', () => {
+        test('responds with status 400 and error message if votes is invalid', () => {
             return request(app)
                 .patch('/api/articles/1')
-                .send({ inc_votes: 'three-six-five'})
+                .send({ alt_votes: 'three-six-five'})
                 .expect(400)
                 .then(({ body: { message } }) => {
                     expect(message).toBe('Bad Request')
                 });
+        });
+    });
+});
+
+describe('DELETE', () => {
+    describe('/api/comments/:comment_id', () => {
+        test('responds with status 204 when passed a valid comment id', () => {
+            return request(app)
+            .delete('/api/comments/2')
+            .expect(204);
         });
     });
 });
