@@ -36,8 +36,8 @@ const getAllArticles = (request, response, next) => {
             response.status(200).send({ articles });
         })
         .catch((err) => {
-            if (err.status === 400) {
-                response.status(400).send({ message: err.message });
+            if (err.status === 400 || err.status === 404) {
+                response.status(err.status).send({ message: err.message });
             } else {
             next(err);
             }
